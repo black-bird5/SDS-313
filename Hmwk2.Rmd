@@ -1,0 +1,85 @@
+---
+title: "Hmwk 2"
+author: "Michael Rees - SDS 313 UT Austin"
+date: "2024-09-17"
+output: html_document
+---
+# **General Information**
+
+The **Homework2_leprosy.csv** dataset contains information collected from nations reporting
+on leprosy cases. We are investigating leprosy cases across various countries and comparing data between each country and region.
+
+**Get file**
+```{r}
+leprosy <- read.csv('Homework2_leprosy.csv')
+library(ggplot2)
+library(kableExtra)
+```
+
+# **Question 1:**
+
+```{r}
+#create a new subset without NA in New Cases for Leprosy
+leprosy_clean <- na.omit(leprosy)
+
+#find the country with the maximum number of leprosy cases
+max_cases_row <- leprosy_clean[which.max(leprosy_clean$New_Cases), ]
+
+#get the country name
+country_with_max_cases <- max_cases_row$Country
+```
+
+
+The country with the highest number of new leprosy cases in 2022 was `r country_with_max_cases`. It is not a fair comparison to look at the raw number of cases when comparing the prevalence of the disease across different countries because a country with more people is much more likely to have a higher raw number of cases and vise versa.
+
+# **Question 2:**
+
+```{r message = FALSE}
+#create a new variable 'Per_100K'
+leprosy_clean$Per_100K <- (leprosy_clean$New_Cases / leprosy_clean$Population) * 100000
+
+#create a distribution
+leprosy_ggplot <- ggplot(leprosy_clean)
+leprosy_ggplot + geom_histogram(aes(x=Per_100K)) + 
+  labs(title = 'Frequency of Leprosy Cases Per 100k People',
+       x = 'Leprosy Cases Per 100k',
+       y = 'Frequency')
+```
+
+
+The minimum value is `r round(min(leprosy_clean$Per_100K), digits = 2)` cases, the median number of cases per 100K is `r round(median(leprosy_clean$Per_100K), digits = 2)`, and the max number of cases per 100K is `r round(max(leprosy_clean$Per_100K), digits = 2)`. The distribution is skewed right and has two upper outliers.
+
+# **Question 3:**
+
+```{r}
+#Create A box plot for each region
+leprosy_ggplot + geom_boxplot(aes(x=Region, y=Per_100K, fill=Region)) +
+labs(title = 'Distribution of Leprosy Cases per 100K by Region',
+       x = 'Region',
+       y = 'Cases per 100K')
+
+#Create a table demonstrating region, # of countries, and median cases per 100K
+mytable_median <- aggregate(Per_100K~Region, data=leprosy_clean, median)
+mytable_countries <- aggregate(Country~Region, data=leprosy_clean, function(x) length(unique(x)))
+mytable <- merge(mytable_countries, mytable_median, by = "Region")
+colnames(mytable) <- c('Region', 'Countries', 'Median')
+mytable$`Median` <- round(mytable$`Median`, 2)
+kable_classic(kbl(mytable,caption = "Cases per 100k"),full_width = FALSE)
+```
+
+The Americas, Europe, and the Middle East generally have the least number of cases per 100k, with the African region having a larger and higher spread and more upper outliers, while APAC has the highest Q1 – Q3 range, demonstrating that they generally have the most cases of leprosy per 100k than any other region.
+
+# **Question 4:**
+
+```{r}
+#Create a scatter plot comparing leprosy cases per 100K and GDP in Billions
+leprosy_ggplot + geom_point(aes(x=Per_100K,y=GDP_billions)) +
+  labs(title='Leprosy Cases per 100K vs. GDP in Billions of a Country', 
+       x='Leprosy Cases per 100K',
+       y='GDP in Billions')
+```
+
+There is a weak, negative correlation between the GDP of a country in billions and leprosy cases per 100k people. This demonstrates that these two variables are not very strongly correlated. The correlation coefficient is `r round(cor(leprosy_clean$Per_100K, leprosy_clean$GDP_billions), digits = 2)`.
+
+# **Question 5:**
+Although it would be thought that like most bacterial diseases, leprosy would be significantly more prevalent in poor economic regions such as South America, Africa, and the Middle East, it does not directly connect with economic status since those regions are similar in economic status as those with the highest number of leprosy cases. Countries with more people are more likely to have higher raw numbers of leprosy cases, notably India who has the highest population and the highest number of leprosy cases. Raw numbers of cases should not be used to calculate prevalence of leprosy in a region because it doesn’t account from the fact that countries with higher populations have more people who can be infected with the disease. You can read more about leprosy here: https://leprosyhistory.org/
