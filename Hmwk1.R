@@ -51,4 +51,4 @@ plot(min$PercentFor,(min$Amount)/1000000,
 #4 - Finding the correlation between these two variables
 cor(min$PercentFor, min$Amount)
 
-#I like men
+#I like men pog
